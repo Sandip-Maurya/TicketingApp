@@ -2,6 +2,8 @@
 temp/
 .venv/
 *.pyc
+*.db
+test.py
 
 # Editors
 .vscode/
