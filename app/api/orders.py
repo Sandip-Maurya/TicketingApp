@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database_setup.database import get_db
 from app.schemas.order_schemas import OrderPayload
-from app.services.orders import process_order
+from app.services.order_service import process_order
 
 router = APIRouter()
 

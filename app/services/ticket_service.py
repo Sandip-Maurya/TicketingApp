@@ -30,7 +30,7 @@ def get_unsold_ticket_status(db: Session) -> dict:
     return result
 
 
-def get_event_ticket_types(db: Session) -> list[dict]:
+def get_ticket_types(db: Session) -> list[dict]:
     events = db.query(Event).all()
     
     result = []

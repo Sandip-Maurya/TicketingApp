@@ -1,10 +1,10 @@
-# app/service/order_helpers.py
+# app/service/order_utils.py
 
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from typing import List
 from app.database_setup.model import Event, Ticket, Order
-from app.services.discounts import get_best_discount
+from app.services.discount_strategy import get_best_discount
 from app.schemas.order_schemas import OrderPayload
 
 
