@@ -2,7 +2,7 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 # Config db
 # DATABASE_URL = 'sqlite://' # for in memory db
@@ -13,8 +13,8 @@ Base = declarative_base()
 
 # Get the database session for API functions
 def get_db():
+    db = SessionLocal()
     try:
-        db = SessionLocal()
         yield db
     finally:
         db.close()

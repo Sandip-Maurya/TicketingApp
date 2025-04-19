@@ -1,8 +1,8 @@
 # ./app/database_setup/seed_data.py
 
 from app.database_setup.database import SessionLocal
-from app.database_setup.model import Event, Ticket, TicketTypes
-from app.database_setup.config import EVENTS
+from app.database_setup.model import Event, Ticket, TicketTypes, Discount, DiscountApplicability
+from app.database_setup.config import EVENTS, DISCOUNT_OFFERS
 
 def seed_events_and_tickets_table():
     db = SessionLocal()
@@ -42,5 +42,28 @@ def seed_events_and_tickets_table():
     finally:
         db.close()
 
+def seed_discounts():
+    db = SessionLocal()
+    try:
+        for offer in DISCOUNT_OFFERS:
+            existing = db.query(Discount).filter(Discount.name == offer['name']).first()
+            if existing:
+                print('Discount data already added.')
+                continue
+            discount = Discount(
+                name = offer['name'],
+                percentage_off = offer['percentage_off'],
+                min_tickets = offer['min_tickets'],
+                applicable_ticket_types = DiscountApplicability(offer['applicable_ticket_types']),
+                applicable_events = offer['applicable_events'],
+                valid_till = offer['valid_till'],
+            )
+            db.add(discount)
+        db.commit()
+        print(f'Discount data added in the discounts table.')
+    finally:
+        db.close()
+
 if __name__ == '__main__':
     seed_events_and_tickets_table()
+    seed_discounts()

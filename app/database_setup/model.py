@@ -1,4 +1,4 @@
-# ./app/database_setup/models.py
+# ./app/database_setup/model.py
 
 from sqlalchemy import (
     Column, 
@@ -70,4 +70,5 @@ class Discount(Base):
     percentage_off = Column(Integer, nullable = False) # from 0% to 50%
     min_tickets = Column(Integer, nullable = False)
     applicable_ticket_types = Column(Enum(DiscountApplicability), nullable = False)
+    applicable_events = Column(JSON, nullable=False)  # NEW: list of event IDs
     valid_till = Column(DateTime)
