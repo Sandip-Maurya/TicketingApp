@@ -17,16 +17,16 @@ import enum
 
 # Set Enum for ticket types, order status and discount applicability
 class TicketTypes(enum.Enum):
-    regular = 'regular_ticket'
-    vip = 'vip_ticket'
+    regular = 'regular'
+    vip = 'vip'
 
 class OrderStatus(enum.Enum):
     confirmed = 'confirmed'
     cancelled = 'cancelled'
 
 class DiscountApplicability(enum.Enum):
-    regular = 'regular_ticket'
-    vip = 'vip_ticket'
+    regular = 'regular'
+    vip = 'vip'
     both = 'both'
 
 
@@ -39,6 +39,8 @@ class Event(Base):
     venue = Column(String, nullable=False)
     event_datetime = Column(DateTime, nullable = False)
     description = Column(String)
+    available_ticket_types = Column(JSON, nullable=False, default=['regular', 'vip'])
+
 
 class Ticket(Base):
     __tablename__  = 'tickets'

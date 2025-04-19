@@ -14,8 +14,8 @@ EVENTS = [
         "event_datetime": IPL_DATETIME,
         "description": "IPL Match between Lucknow Super Giants and Delhi Capitals in Lucknow",
         "tickets": {
-            "regular_ticket": {"count": 900, "price": 1000},
-            "vip_ticket": {"count": 100, "price": 3000}
+            "regular": {"count": 900, "price": 1000},
+            "vip": {"count": 100, "price": 3000}
         }
     },
     {
@@ -24,13 +24,13 @@ EVENTS = [
         "event_datetime": COMEDY_SHOW_DATETIME,
         "description": "Stand-up comedy night with top comedians.",
         "tickets": {
-            "regular_ticket": {"count": 400, "price": 500},
-            "vip_ticket": {"count": 100, "price": 1000}
+            "regular": {"count": 400, "price": 500},
+            "vip": {"count": 100, "price": 1000}
         }
     }
 ]
 
-TICKET_TYPES = ["regular_ticket", "vip_ticket"]
+TICKET_TYPES = ["regular", "vip"]
 
 
 DISCOUNT_OFFERS = [
@@ -38,7 +38,7 @@ DISCOUNT_OFFERS = [
         "name": "Group Saver",
         "percentage_off": 10,
         "min_tickets": 5,
-        "applicable_ticket_types": "regular_ticket",
+        "applicable_ticket_types": "regular",
         "applicable_events": [1, 2],
         "valid_till": VALID_TILL
     },
@@ -46,7 +46,7 @@ DISCOUNT_OFFERS = [
         "name": "VIP Treat",
         "percentage_off": 15,
         "min_tickets": 3,
-        "applicable_ticket_types": "vip_ticket",
+        "applicable_ticket_types": "vip",
         "applicable_events": [1],
         "valid_till": VALID_TILL
     },

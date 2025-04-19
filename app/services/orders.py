@@ -1,42 +1,56 @@
 # app/services/orders.py
 
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
-from app.services.discounts import get_best_discount
 from app.schemas.order_schemas import OrderPayload
-from app.services.order_helpers import (
-    validate_event,
-    get_available_tickets,
-    select_and_reserve_tickets,
-    apply_discount,
-    create_order_record
-)
+from app.services.order_helpers import validate_event, reserve_tickets_by_type, create_order_record
+from app.services.order_logic import get_best_discount_strategy
+from app.schemas.order_schemas import OrderPayload
+from sqlalchemy.orm import Session
 
 
 def process_order(payload: OrderPayload, db: Session) -> dict:
+    # 1. Validate event
     event = validate_event(payload.event_id, db)
-    tickets = get_available_tickets(payload.event_id, db)
 
-    if payload.quantity > len(tickets):
-        raise HTTPException(status_code=404, detail=f"Only {len(tickets)} tickets available")
+    # 2. Reserve tickets (raises error if not enough)
+    selected_tickets = reserve_tickets_by_type(
+        db,
+        payload.event_id,
+        payload.tickets,
+        payload.user_email
+    )
 
-    selected_tickets, ticket_ids = select_and_reserve_tickets(tickets, payload.quantity, payload.user_email, db)
-    total_price = sum(ticket.price for ticket in selected_tickets)
-    ticket_type = selected_tickets[0].ticket_type.value
+    ticket_ids = [t.id for t in selected_tickets]
+    total_price = sum(t.price for t in selected_tickets)
 
-    discount, price_after_discount = apply_discount(db, event.id, ticket_type, payload.quantity, total_price)
+    # 3. Get best discount strategy
+    discounts_applied, price_after_discount, strategy = get_best_discount_strategy(
+        db,
+        payload.event_id,
+        selected_tickets
+    )
+
+    # 4. Save order
+    applied_discount_ids = [d.id for d in discounts_applied] if discounts_applied else []
 
     order = create_order_record(
         payload=payload,
         selected_ticket_ids=ticket_ids,
         total_price=total_price,
         price_after_discount=price_after_discount,
-        discount=discount,
+        discount_ids=applied_discount_ids,
         db=db
     )
 
     return {
+        "message": "Order created successfully.",
         "order_id": order.id,
         "ticket_ids": ticket_ids,
-        "discount_applied": discount.name if discount else None
+        "total_price": total_price,
+        "price_after_discount": price_after_discount,
+        "discount_applied": [
+            {"id": d.id, "name": d.name, "type": d.applicable_ticket_types.value}
+            for d in discounts_applied
+        ],
+        "strategy_used": strategy
     }
