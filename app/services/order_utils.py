@@ -3,7 +3,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from typing import List
-from app.database_setup.model import Event, Ticket, Order
+from app.database_setup.model import Event, Ticket, Order, OrderStatus
 from app.services.discount_strategy import get_best_discount
 from app.schemas.order_schemas import OrderPayload
 
@@ -29,7 +29,6 @@ def apply_discount(db: Session, event_id: int, ticket_type: str, qty: int, total
         return discount, total - discount_amount
     return None, total
 
-
 def create_order_record(
     payload: OrderPayload,
     selected_ticket_ids: List[int],
@@ -38,70 +37,68 @@ def create_order_record(
     discount_ids: List[int],
     db: Session
 ) -> Order:
+    # 1️⃣ Build the Order object
     order = Order(
         event_id=payload.event_id,
         sold_tickets_ids=selected_ticket_ids,
         quantity_sold=len(selected_ticket_ids),
         total_tickets_price=total_price,
         price_after_discount=price_after_discount,
-        status='confirmed',
+        status=OrderStatus.reserved,
         user_name=payload.user_name,
         user_email=payload.user_email,
-        applied_discount_id=discount_ids[0] if discount_ids else None  # storing only one for now
+        applied_discount_id=discount_ids[0] if discount_ids else None
     )
-    db.add(order)
-    db.commit()
-    db.refresh(order)
-    return order
 
-from fastapi import HTTPException
+    # 2️⃣ Add and flush so `order.id` is populated (no commit here)
+    db.add(order)
+    db.flush()
+
+    # 3️⃣ Mark each selected ticket as sold
+    tickets = (
+        db.query(Ticket)
+          .filter(Ticket.id.in_(selected_ticket_ids))
+          .all()
+    )
+    for ticket in tickets:
+        ticket.is_sold = True
+        db.add(ticket)
+    db.flush()
+
+    # 4️⃣ Refresh the order to populate relationships, still inside the transaction
+    db.refresh(order)
+
+    return order
+# app/services/ticket_utils.py
 
 def reserve_tickets_by_type(
     db: Session,
     event_id: int,
-    ticket_requests: dict,
+    ticket_counts: dict[str,int],
     user_email: str
-) -> List[Ticket]:
-    # 1️⃣ Reject any negative quantities
-    for ticket_type_str, qty in ticket_requests.items():
-        if qty < 0:
-            raise HTTPException(
-                status_code=422,
-                detail=f'Invalid ticket quantity {qty} for "{ticket_type_str}"'
-            )
+) -> list[Ticket]:
+    # 1️⃣ Query unsold & unreserved tickets
+    tickets = (
+        db.query(Ticket)
+          .filter(
+              Ticket.event_id == event_id,
+              Ticket.is_sold   == False,
+              Ticket.is_reserved == False,
+              Ticket.ticket_type.in_(ticket_counts.keys())
+          )
+          .order_by(Ticket.id.asc())
+          .all()
+    )
 
-    # 2️⃣ Reject total zero (no tickets selected)
-    total_requested = sum(ticket_requests.values())
-    if total_requested <= 0:
-        raise HTTPException(
-            status_code=422,
-            detail='Please select at least one ticket to place an order.'
-        )
-
-    all_selected_tickets: List[Ticket] = []
-
-    # 3️⃣ Reserve each ticket type
-    for ticket_type_str, qty in ticket_requests.items():
-        if qty <= 0:
-            continue
-
-        tickets = db.query(Ticket).filter(
-            Ticket.event_id  == event_id,
-            Ticket.ticket_type == ticket_type_str,
-            Ticket.is_sold     == False
-        ).limit(qty).all()
-
-        if len(tickets) < qty:
-            raise HTTPException(
-                status_code=422,
-                detail=f'Only {len(tickets)} "{ticket_type_str}" tickets available for event {event_id}.'
-            )
-
-        for t in tickets:
-            t.is_sold   = True
-            t.issued_to = user_email
+    reserved = []
+    # 2️⃣ Reserve as many as requested per type
+    for typ, count in ticket_counts.items():
+        to_take = [t for t in tickets if t.ticket_type.value == typ][:count]
+        for t in to_take:
+            t.is_reserved = True
+            t.issued_to = user_email     
             db.add(t)
+            reserved.append(t)
 
-        all_selected_tickets.extend(tickets)
-
-    return all_selected_tickets
+    db.flush()
+    return reserved

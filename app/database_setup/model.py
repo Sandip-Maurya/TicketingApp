@@ -21,8 +21,9 @@ class TicketTypes(enum.Enum):
     vip = 'vip'
 
 class OrderStatus(enum.Enum):
-    confirmed = 'confirmed'
-    cancelled = 'cancelled'
+    reserved  = "reserved"
+    confirmed = "confirmed"
+    cancelled = "cancelled"
 
 class DiscountApplicability(enum.Enum):
     regular = 'regular'
@@ -50,6 +51,7 @@ class Ticket(Base):
     ticket_type = Column(Enum(TicketTypes), nullable = False)
     is_sold = Column(Boolean, default = False, nullable = False)
     issued_to = Column(String, nullable = True)
+    is_reserved = Column(Boolean, default=False, nullable=False)
 
 class Order(Base):
     __tablename__ = 'orders'
