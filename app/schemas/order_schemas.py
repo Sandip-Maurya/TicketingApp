@@ -18,13 +18,16 @@ class OrderPayload(BaseModel):
     user_email: EmailStr
 
 class CheckOfferRequest(BaseModel):
-    event_id: int
+    event_id: int = 1
     tickets: Dict[TicketType, TicketQty] = Field(..., example={'regular': 5, 'vip': 3})
 
 class OfferInfo(BaseModel):
     name: str
     percentage_off: float
     saving: float
+    min_tickets: int              
+    applicable_ticket_type: str   
+
 
 class OfferCheckResponse(BaseModel):
     message: str
@@ -34,3 +37,4 @@ class OfferCheckResponse(BaseModel):
     total_price: float
     price_after_discount: float
     tickets_available: bool
+

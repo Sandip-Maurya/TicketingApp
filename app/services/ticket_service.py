@@ -7,25 +7,29 @@ from app.database_setup.model import Ticket, Event
 
 def get_unsold_ticket_status(db: Session) -> dict:
     now = datetime.now()
-    result = defaultdict(lambda: defaultdict(int))
 
-    # Fetch events whose event_datetime is in the future
-    upcoming_events = db.query(Event).filter(
-        Event.event_datetime >= now
-    ).all()
+    # 1) find upcoming events
+    upcoming = db.query(Event).filter(Event.event_datetime >= now).all()
+    event_map = {e.id: e.name for e in upcoming}
+    valid_ids = set(event_map)
 
-    event_map = {e.id: e.name for e in upcoming_events}
-    valid_event_ids = set(event_map.keys())
+    # 2) prepare result structure
+    #    each entry: { event_name: { ticket_type: {count: int, price: float} } }
+    result = defaultdict(lambda: defaultdict(lambda: {"count": 0, "price": None}))
 
-    # Get unsold tickets for those events
+    # 3) fetch all unsold tickets for those events
     tickets = db.query(Ticket).filter(
         Ticket.is_sold == False,
-        Ticket.event_id.in_(valid_event_ids)
+        Ticket.event_id.in_(valid_ids)
     ).all()
 
-    for ticket in tickets:
-        event_name = event_map[ticket.event_id]
-        result[event_name][ticket.ticket_type.value] += 1
+    # 4) tally them
+    for t in tickets:
+        ev_name = event_map[t.event_id]
+        info = result[ev_name][t.ticket_type.value]
+        info["count"] += 1
+        # price will be same for all of that type—just overwrite to the same value
+        info["price"] = t.price
 
     return result
 

@@ -2,8 +2,12 @@
 
 from fastapi import FastAPI
 from app.api import events, orders, offers, tickets
+from app.admin import router as admin_router
 
-app = FastAPI()
+app = FastAPI(title='TicketingApp')
+
+# Admin endpoints
+app.include_router(admin_router)
 
 app.include_router(events.router, prefix="/events", tags=["Events"])
 app.include_router(orders.router, prefix="/order", tags=["Orders"])
