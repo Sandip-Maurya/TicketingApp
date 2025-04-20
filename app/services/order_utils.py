@@ -1,4 +1,4 @@
-# app/service/order_utils.py
+# app/services/order_utils.py
 
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
@@ -61,29 +61,46 @@ def reserve_tickets_by_type(
     event_id: int,
     ticket_requests: dict,
     user_email: str
-) -> list[Ticket]:
-    all_selected_tickets = []
+) -> List[Ticket]:
+    # 1️⃣ Reject any negative quantities
+    for ticket_type_str, qty in ticket_requests.items():
+        if qty < 0:
+            raise HTTPException(
+                status_code=422,
+                detail=f'Invalid ticket quantity {qty} for "{ticket_type_str}"'
+            )
 
+    # 2️⃣ Reject total zero (no tickets selected)
+    total_requested = sum(ticket_requests.values())
+    if total_requested <= 0:
+        raise HTTPException(
+            status_code=422,
+            detail='Please select at least one ticket to place an order.'
+        )
+
+    all_selected_tickets: List[Ticket] = []
+
+    # 3️⃣ Reserve each ticket type
     for ticket_type_str, qty in ticket_requests.items():
         if qty <= 0:
             continue
 
         tickets = db.query(Ticket).filter(
-            Ticket.event_id == event_id,
+            Ticket.event_id  == event_id,
             Ticket.ticket_type == ticket_type_str,
-            Ticket.is_sold == False
+            Ticket.is_sold     == False
         ).limit(qty).all()
 
         if len(tickets) < qty:
             raise HTTPException(
                 status_code=422,
-                detail=f'Only {len(tickets)} {ticket_type_str.value} tickets available'
+                detail=f'Only {len(tickets)} "{ticket_type_str}" tickets available for event {event_id}.'
             )
 
-        for ticket in tickets:
-            ticket.is_sold = True
-            ticket.issued_to = user_email
-            db.add(ticket)
+        for t in tickets:
+            t.is_sold   = True
+            t.issued_to = user_email
+            db.add(t)
 
         all_selected_tickets.extend(tickets)
 
