@@ -1,7 +1,7 @@
 # app/schemas/ticket_schemas.py
 
-from pydantic import BaseModel
-from typing import Literal, Optional
+from pydantic import BaseModel, ConfigDict
+from typing import List, Optional
 from app.database_setup.model import TicketTypes
 
 class TicketCreate(BaseModel):
@@ -16,8 +16,7 @@ class TicketOut(BaseModel):
     price: float
     is_sold: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)        
 
 
 class TicketSummary(BaseModel):
@@ -30,20 +29,27 @@ class TicketsAddResponse(BaseModel):
     regular: Optional[TicketSummary] = None
     vip:     Optional[TicketSummary] = None
 
-# ----
 
 class TicketDelete(BaseModel):
     ticket_type: TicketTypes
     count: int
 
-class TicketsAddResponse(BaseModel):
-    message: str
-    event_id: int
-    regular: Optional[TicketSummary] = None
-    vip:     Optional[TicketSummary] = None
 
 class TicketsDeleteResponse(BaseModel):
     message: str
     event_id: int
     regular: Optional[TicketSummary] = None
     vip:     Optional[TicketSummary] = None
+
+class TicketDetail(BaseModel):
+    count: int
+    price: float
+
+class EventUnsoldTickets(BaseModel):
+    event_name: str
+    regular: TicketDetail
+    vip: TicketDetail
+
+class EventTicketTypes(BaseModel):
+    event_name: str
+    ticket_types: List[str]

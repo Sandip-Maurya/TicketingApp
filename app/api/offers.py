@@ -28,7 +28,7 @@ from app.database_setup.database import get_db
 router = APIRouter()
 
 @router.post(
-    '/check‑offers',
+    '/check-offers',
     response_model=OffersResponse
 )
 def offers_check(

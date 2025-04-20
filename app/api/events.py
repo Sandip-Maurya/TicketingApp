@@ -9,6 +9,6 @@ from typing import List
 
 router = APIRouter()
 
-@router.get('/get-all-events', response_model=List[EventOut])
+@router.get('/get-all-events', response_model = List[EventOut], summary = 'Get details of all the events')
 def get_all_events(db: Session = Depends(get_db)):
     return db.query(Event).all()

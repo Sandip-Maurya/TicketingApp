@@ -1,6 +1,6 @@
 # app/schemas/event_schemas.py
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional
 
@@ -10,8 +10,8 @@ class EventBase(BaseModel):
     event_datetime: datetime
     description: Optional[str] = None
 
-class EventCreate(EventBase):
-    ...
+# For naming consistancy
+EventCreate = EventBase
 
 class EventUpdate(BaseModel):
     name: Optional[str] = None
@@ -21,8 +21,7 @@ class EventUpdate(BaseModel):
 
 class EventOut(EventBase):
     id: int
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
         
 class EventResponse(BaseModel):
     message: str

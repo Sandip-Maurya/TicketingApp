@@ -1,70 +1,27 @@
 
 # # app/schemas/order_schemas.py
 
-# from pydantic import BaseModel, EmailStr, Field, conint
-# from typing import Annotated, Dict, Optional, List
-# from enum import Enum
-
-# TicketQty = Annotated[int, conint(ge=1)]  
-
-# class TicketType(str, Enum):
-#     regular = 'regular'
-#     vip     = 'vip'
-
-# class OrderPayload(BaseModel):
-#     event_id: int = 1
-#     tickets: Dict[TicketType, TicketQty] = Field(..., example={'regular': 5, 'vip': 3})
-#     user_name: str
-#     user_email: EmailStr
-
-# class CheckOfferRequest(BaseModel):
-#     event_id: int = 1
-#     tickets: Dict[TicketType, TicketQty] = Field(..., example={'regular': 5, 'vip': 3})
-
-# class OfferInfo(BaseModel):
-#     name: str
-#     percentage_off: float
-#     saving: float
-#     min_tickets: int              
-#     applicable_ticket_type: str   
-
-
-# class OfferCheckResponse(BaseModel):
-#     message: str
-#     your_input: dict
-#     applicable_discounts: List[OfferInfo]
-#     applied_discounts: Optional[str] = None
-#     total_price: float
-#     price_after_discount: float
-#     tickets_available: bool
-
-''''''
-
 from typing import List, Literal, Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 # incoming payload
 class TicketOrder(BaseModel):
-    regular: int = Field(..., ge = 0, example = 4)
-    vip:     int = Field(..., ge = 0, example = 2)
+    regular: int = Field(..., ge = 0, json_schema_extra = {"example": 4} )
+    vip: int      = Field(..., ge = 0, json_schema_extra = {"example": 2})
+
 
 class CheckOfferRequest(BaseModel):
     event_id: int = 1
     tickets: TicketOrder
 
-    class Config:
+    model_config = ConfigDict(
         json_schema_extra = {
             'example': {
                 'event_id': 1,
                 'tickets': {'regular': 6, 'vip': 3}
             }
         }
-
-# class OfferInfo(BaseModel):
-#     name: str
-#     applicable_ticket_type: Literal['regular', 'vip', 'both']
-#     percentage_off: float
-#     saved_amount: float
+    )
 
 class OfferInfo(BaseModel):
     name: str
@@ -114,16 +71,16 @@ class OrderResponse(BaseModel):
     total: OrderTotal
     applied_offers: List[str]
 
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             'example': {
                 'message': 'Your order was successful.',
                 'order_id': 130,
                 'user': {'name': 'Sandip', 'email': 'sandip@example.com'},
                 'tickets': {
                     'regular': {
-                        'ticket_ids': [449,450,451,452,453,454],
+                        'ticket_ids': [449, 450, 451, 452, 453, 454],
                         'count': 6,
                         'unit_price': 1000,
                         'offer': 'Group Saver',
@@ -131,7 +88,7 @@ class OrderResponse(BaseModel):
                         'final_price_per_ticket': 900
                     },
                     'vip': {
-                        'ticket_ids': [932,933,934],
+                        'ticket_ids': [932, 933, 934],
                         'count': 3,
                         'unit_price': 3000,
                         'offer': 'VIP Treat',
@@ -147,3 +104,4 @@ class OrderResponse(BaseModel):
                 'applied_offers': ['Mega Combo']
             }
         }
+    )
