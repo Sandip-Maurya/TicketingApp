@@ -41,6 +41,7 @@ class TicketsDeleteResponse(BaseModel):
     regular: Optional[TicketSummary] = None
     vip:     Optional[TicketSummary] = None
 
+
 class TicketDetail(BaseModel):
     count: int
     price: float

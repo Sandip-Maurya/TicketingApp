@@ -8,10 +8,10 @@ from app.schemas.event_schemas import EventCreate, EventUpdate
 
 def create_event(db: Session, payload: EventCreate) -> Event:
     new_event = Event(
-        name=payload.name,
-        venue=payload.venue,
-        event_datetime=payload.event_datetime,
-        description=payload.description,
+        name = payload.name,
+        venue = payload.venue,
+        event_datetime = payload.event_datetime,
+        description = payload.description
     )
     db.add(new_event)
     db.commit()
@@ -23,22 +23,18 @@ def update_event(db: Session, event_id: int, payload: EventUpdate) -> Optional[E
     if not event:
         return None
 
-    # only update the fields provided
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    for field, value in payload.model_dump(exclude_unset = True).items():
         setattr(event, field, value)
 
     db.commit()
     db.refresh(event)
     return event
 
-
 def delete_event(db: Session, event_id: int) -> Optional[Event]:
-
     event = db.query(Event).filter(Event.id == event_id).first()
     if not event:
         return None
 
-    # capture its data, then delete
     db.delete(event)
     db.commit()
     return event

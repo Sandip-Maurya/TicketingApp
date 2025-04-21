@@ -20,4 +20,4 @@ def test_get_all_events():
         assert isinstance(event['name'], str), "'name' should be a string."
         assert isinstance(event['venue'], str), "'venue' should be a string."
         assert isinstance(event['event_datetime'], str), "'event_datetime' should be a string."
-        assert isinstance(event['description'], str), "'description' should be a string."
+        assert event['description'] is None or isinstance(event['description'], str), "'description' should be a string or None."

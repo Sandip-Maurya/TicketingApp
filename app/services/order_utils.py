@@ -1,8 +1,9 @@
 # app/services/order_utils.py
 
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from typing import List
+from datetime import datetime
 from app.database_setup.model import Event, Ticket, Order, OrderStatus
 from app.services.discount_strategy import get_best_discount
 from app.schemas.order_schemas import OrderPayload
@@ -69,20 +70,35 @@ def create_order_record(
     db.refresh(order)
 
     return order
-# app/services/ticket_utils.py
+
 
 def reserve_tickets_by_type(
     db: Session,
     event_id: int,
-    ticket_counts: dict[str,int],
+    ticket_counts: dict[str, int],
     user_email: str
 ) -> list[Ticket]:
-    # 1️⃣ Query unsold & unreserved tickets
+    # 1️⃣ Check event validity and timing
+    event = db.get(Event, event_id)
+    if not event:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail='Event not found.'
+        )
+    
+    if event.event_datetime < datetime.now():
+        print("DEBUG: Event expired check triggered")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail='Cannot reserve tickets for an event that has already started or finished.'
+        )
+
+    # 2️⃣ Fetch unsold & unreserved tickets
     tickets = (
         db.query(Ticket)
           .filter(
               Ticket.event_id == event_id,
-              Ticket.is_sold   == False,
+              Ticket.is_sold == False,
               Ticket.is_reserved == False,
               Ticket.ticket_type.in_(ticket_counts.keys())
           )
@@ -90,13 +106,32 @@ def reserve_tickets_by_type(
           .all()
     )
 
-    reserved = []
-    # 2️⃣ Reserve as many as requested per type
+    # 3️⃣ Check if all requested types are available
+    shortage = []
+    type_to_available = {
+        typ: [t for t in tickets if t.ticket_type.value == typ]
+        for typ in ticket_counts
+    }
+
     for typ, count in ticket_counts.items():
-        to_take = [t for t in tickets if t.ticket_type.value == typ][:count]
-        for t in to_take:
+        available = type_to_available.get(typ, [])
+        if len(available) < count:
+            shortage.append(f"{count - len(available)} '{typ}'")
+
+    if shortage:
+        print("DEBUG: Ticket shortage triggered")
+
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Not enough tickets available: {', '.join(shortage)} ticket(s) missing."
+        )
+
+    # 4️⃣ All good – mark tickets as reserved
+    reserved = []
+    for typ, count in ticket_counts.items():
+        for t in type_to_available[typ][:count]:
             t.is_reserved = True
-            t.issued_to = user_email     
+            t.issued_to = user_email
             db.add(t)
             reserved.append(t)
 

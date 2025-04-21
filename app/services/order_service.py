@@ -1,6 +1,5 @@
 # app/services/order_service.py
 
-# app/services/order_service.py
 
 from typing import List
 from fastapi import HTTPException, status
