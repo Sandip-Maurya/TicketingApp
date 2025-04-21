@@ -9,6 +9,6 @@ from app.admin.tickets_management import router as tickets_router
 router = APIRouter()
 
 # mount the sub‑routers under /admin
-router.include_router(events_router, prefix='/events', tags=['1.1 Admin - Events Management'])
-router.include_router(tickets_router, prefix='/events/{event_id}/tickets', tags=['1.2 Admin - Tickets Management'])
-# router.include_router(discounts_router, prefix='/discounts', tags=['admin-discounts'])
+router.include_router(events_router, prefix = '/events', tags = ['1.1 Admin - Events Management'])
+router.include_router(tickets_router, prefix = '/events/{event_id}/tickets', tags = ['1.2 Admin - Tickets Management'])
+# router.include_router(discounts_router, prefix = '/discounts', tags = ['admin-discounts'])
