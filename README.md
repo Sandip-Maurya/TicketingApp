@@ -64,7 +64,7 @@ TicketingApp/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/TicketingApp.git
+git clone https://github.com/Sandip-Maurya/TicketingApp
 cd TicketingApp
 ```
 
@@ -106,7 +106,25 @@ pytest tests/ -v
 - `GET /offers/check-offers` – Preview available offers before purchase
 
 ---
+## 🚀 Live Deployment
 
+The project is deployed on a DigitalOcean Droplet.
+
+🔗 **[Live API Docs](http://139.59.56.230:9000/docs)**  
+Use this link to explore and test all available endpoints via Swagger UI.
+
+---
+
+## 🐳 Run with Docker
+
+To build and run locally using Docker:
+
+```bash
+docker build -t ticketingapp .
+docker run -d -p 8000:8000 ticketingapp
+
+
+---
 ## ❤️ Contribution
 
 Contributions, issues, and feature requests are welcome!  
